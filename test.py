@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QAbstractItemView
 import sys
 from PyQt5.QtChart import QChart, QChartView, QBarSet, QBarSeries, QStackedBarSeries, QBarCategoryAxis
 from PyQt5.QtGui import QPainter
@@ -87,10 +87,12 @@ class MyWidget(QMainWindow, Ui_Form):
             data_by_programms[row[1]] = data_by_programms.get(row[1], 0) + row[2]
         self.tableWidget.setColumnCount(2)  # Устанавливаем три колонки
         self.tableWidget.setRowCount(len(data_by_programms))
-        self.tableWidget.setHorizontalHeaderLabels(["Программа", "Длительность использования"])
+        self.tableWidget.setHorizontalHeaderLabels(["Программа", "Длительность (мин.)"])
+        self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         for i, row in enumerate(sorted(list(data_by_programms.items()), key=lambda x: x[1], reverse=True)):
             self.tableWidget.setItem(i, 0, QTableWidgetItem(row[0]))
-            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(row[1])))
+            duration = int(row[1] // 60) if row[1] // 60 % 1 == 0 else row[1] // 60
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(duration)))
         self.tableWidget.resizeColumnsToContents()
 
 
