@@ -9,13 +9,31 @@ import time
 import psutil
 import os
 
+from test import run_window
 from threading import Thread
 from mouse_listener import MouseListener
 from button_listener import ButtonListener
 from DB_module import DB_bot
 
-if "icons" not in os.listdir(os.path.curdir):
-    os.mkdir("./icons/")
+import logging
+
+
+#
+# logging.info('dddddddd')
+
+
+def start_all_listener():
+    a = Thread(target=start_mouse_listener)
+    a.setName('mouse_listener')
+    a.start()
+
+    a = Thread(target=start_button_listener)
+    a.setName('button_listener')
+    a.start()
+
+    a = Thread(target=start_window_listener)
+    a.setName('window_listener')
+    a.start()
 
 
 def save_image(path, title):
@@ -54,18 +72,20 @@ class WindowListener:
     def get_current_window(self):
         hwnd = win32gui.GetForegroundWindow()
         _, pid = win32process.GetWindowThreadProcessId(hwnd)
-        path = psutil.Process(pid).exe()
-        title = win32gui.GetWindowText(hwnd).split('-')[-1].strip()
-        if path != self.current_procces.get('executable_path', '') or datetime.datetime.now().strftime('%H:%M')[
-                                                                      3:] == '00':
-            self.current_procces.clear()
-            self.current_procces['title'] = title
-            self.current_procces['duration'] = 0
-            self.current_procces['executable_path'] = path
-            self.current_procces['start_date'] = time.time()
-            self.create_session(self.current_procces)
-        self.current_procces['duration'] += 0.5
-        self.c.set_duration_last_session(self.current_procces['duration'])
+        if pid >= 0:
+            path = psutil.Process(pid).exe()
+            title = win32gui.GetWindowText(hwnd).split('-')[-1].strip()
+            if path != self.current_procces.get('executable_path', '') or datetime.datetime.now().strftime('%H:%M')[
+                                                                          3:] == '00':
+                logging.info(f'начата сессия {title}')
+                self.current_procces.clear()
+                self.current_procces['title'] = title
+                self.current_procces['duration'] = 0
+                self.current_procces['executable_path'] = path
+                self.current_procces['start_date'] = time.time()
+                self.create_session(self.current_procces)
+            self.current_procces['duration'] += 0.5
+            self.c.set_duration_last_session(self.current_procces['duration'])
 
     def start(self):
         while True:
@@ -90,15 +110,7 @@ def start_mouse_listener():
 def start_window_listener():
     WindowListener().start()
 
-
-a = Thread(target=start_mouse_listener)
-a.setName('mouse_listener')
-a.start()
-
-a = Thread(target=start_button_listener)
-a.setName('button_listener')
-a.start()
-
-a = Thread(target=start_window_listener)
-a.setName('window_listener')
-a.start()
+# a = Thread(target=run_window)
+# a.setName('run_window')
+# a.start()
+# run_window()

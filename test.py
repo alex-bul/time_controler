@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QAbstractItemView
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QAbstractItemView, QFileDialog
 import sys
 from PyQt5.QtChart import QChart, QChartView, QBarSet, QBarSeries, QStackedBarSeries, QBarCategoryAxis
 from PyQt5.QtGui import QPainter
@@ -6,10 +6,30 @@ from PyQt5.QtCore import Qt
 import pyqtgraph as pg
 import numpy as np
 import time
+import logging
 
 from DB_module import DB_bot
 
 from test_form import Ui_Form
+import listeners
+import datetime
+
+
+def get_seconds_current_day():
+    current_time = datetime.datetime.now()
+    return int(current_time.hour) * 3600 + int(current_time.minute) * 60 + int(current_time.second)
+
+
+class QTextEditLogger(logging.Handler):
+    def __init__(self, parent):
+        super().__init__()
+
+        self.widget = parent.plainTextEdit
+        self.widget.setReadOnly(True)
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.widget.appendPlainText(msg)
 
 
 class MyWidget(QMainWindow, Ui_Form):
@@ -17,12 +37,19 @@ class MyWidget(QMainWindow, Ui_Form):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle("PyQt BarChart")
-        self.setGeometry(100, 100, 680, 900)
+        self.setGeometry(100, 100, 770, 700)
         self.show()
         self.c = DB_bot()
         self.buttonRefresh.clicked.connect(self.update)
+        self.pushButton_2.clicked.connect(self.saveFileDialog)
         self.chartView = None
         self.update()
+
+        logTextBox = QTextEditLogger(self)
+        # self.plainTextEdit.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        logTextBox.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
+        logging.getLogger().addHandler(logTextBox)
+        logging.getLogger().setLevel(logging.DEBUG)
 
     def update(self):
         self.update_graph()
@@ -34,7 +61,7 @@ class MyWidget(QMainWindow, Ui_Form):
         high = QBarSet("Работа")
 
         current_time = time.time()
-        sessions = self.c.get_sessions_by_date(current_time - 86400)
+        sessions = self.c.get_sessions_by_date(current_time - get_seconds_current_day())
         sorted_data = {}
         for row in sessions:
             hour = (current_time - row[-1]) / 3600
@@ -42,11 +69,14 @@ class MyWidget(QMainWindow, Ui_Form):
                 hour = int(hour) + 1
             sorted_data[hour] = sorted_data.get(hour, []) + [row]
 
-        # low << -52 << -50 << -45.3 << -37.0 << -25.6 << -8.0 << -6.0 << -11.8 << -19.7 << -32.8 << -43.0 << -48.0
         for j in range(24):
             if j in sorted_data.keys():
-                high.append(sum([i[2] for i in sorted_data[j]]) // 60)
-        # high << 11.9 << 12.8 << 18.5 << 26.5 << 32.0 << 34.8 << 38.2 << 34.8 << 29.8 << 20.4 << 15.1 << 11.8
+                result = sum([i[2] for i in sorted_data[j]]) // 60
+                high.append(result)
+                low.append(-(60 - result))
+            else:
+                high.append(0)
+                low.append(0)
 
         series = QStackedBarSeries()
         series.append(low)
@@ -57,14 +87,14 @@ class MyWidget(QMainWindow, Ui_Form):
         chart.setTitle("Статистика использования ПК")
         chart.setAnimationOptions(QChart.SeriesAnimations)
 
-        categories = [str(i) for i in range(0, 24)]
+        categories = [str(i) for i in range(1, 25)]
 
         axis = QBarCategoryAxis()
         axis.append(categories)
         axis.setTitleText("Время")
         chart.createDefaultAxes()
         chart.setAxisX(axis, series)
-        chart.axisY(series).setRange(-52, 52)
+        chart.axisY(series).setRange(-60, 60)
         chart.axisY(series).setTitleText("Длительность (мин.)")
         chart.setMinimumWidth(20)
 
@@ -86,18 +116,38 @@ class MyWidget(QMainWindow, Ui_Form):
         for row in sessions:
             data_by_programms[row[1]] = data_by_programms.get(row[1], 0) + row[2]
         self.tableWidget.setColumnCount(2)  # Устанавливаем три колонки
-        self.tableWidget.setRowCount(len(data_by_programms))
+        # self.tableWidget.setRowCount(len(data_by_programms))
         self.tableWidget.setHorizontalHeaderLabels(["Программа", "Длительность (мин.)"])
         self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         for i, row in enumerate(sorted(list(data_by_programms.items()), key=lambda x: x[1], reverse=True)):
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(row[0]))
             duration = int(row[1] // 60) if row[1] // 60 % 1 == 0 else row[1] // 60
-            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(duration)))
+            if duration:
+
+                if self.tableWidget.rowCount() <= i:
+                    self.tableWidget.insertRow(self.tableWidget.rowCount())
+                self.tableWidget.setItem(i, 0, QTableWidgetItem(row[0]))
+                self.tableWidget.setItem(i, 1, QTableWidgetItem(str(duration)))
         self.tableWidget.resizeColumnsToContents()
 
+    def saveFileDialog(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", "",
+                                                  "All Files (*);;Text Files (*.txt)", options=options)
+        if fileName:
+            print(fileName)
 
-#
-app = QApplication(sys.argv)
-ex = MyWidget()
-ex.show()
-sys.exit(app.exec_())
+        with open(fileName, 'w') as file:
+            file.write('ddddd')
+
+
+def run_window():
+    app = QApplication(sys.argv)
+    ex = MyWidget()
+    ex.show()
+    sys.exit(app.exec_())
+
+
+if __name__ == '__main__':
+    listeners.start_all_listener()
+    run_window()

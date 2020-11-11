@@ -76,3 +76,6 @@ class DB_bot:
     def get_sessions_by_date(self, start_date):
         return self.c.execute(
             f'SELECT * FROM {SESSIONS_TABLE} WHERE start_date>={start_date} ORDER BY start_date').fetchall()
+
+    def delete_old(self, start_date):
+        self.c.execute(f'DELETE FROM {SESSIONS_TABLE} WHERE start_date < {start_date}')

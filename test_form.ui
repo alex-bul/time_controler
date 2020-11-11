@@ -21,9 +21,9 @@
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>80</y>
-     <width>731</width>
+     <x>10</x>
+     <y>20</y>
+     <width>741</width>
      <height>261</height>
     </rect>
    </property>
@@ -36,8 +36,8 @@
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
-     <x>130</x>
-     <y>370</y>
+     <x>500</x>
+     <y>290</y>
      <width>191</width>
      <height>31</height>
     </rect>
@@ -75,21 +75,21 @@ font: 81 11pt &quot;Open Sans&quot;;
   <widget class="QPushButton" name="pushButton_2">
    <property name="geometry">
     <rect>
-     <x>380</x>
-     <y>370</y>
+     <x>90</x>
+     <y>290</y>
      <width>75</width>
      <height>23</height>
     </rect>
    </property>
    <property name="text">
-    <string>PushButton</string>
+    <string>Экспорт</string>
    </property>
   </widget>
   <widget class="QPushButton" name="buttonRefresh">
    <property name="geometry">
     <rect>
-     <x>50</x>
-     <y>370</y>
+     <x>20</x>
+     <y>290</y>
      <width>51</width>
      <height>23</height>
     </rect>
@@ -105,11 +105,47 @@ font: 81 11pt &quot;Open Sans&quot;;
   <widget class="QTableWidget" name="tableWidget">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>430</y>
-     <width>731</width>
+     <x>10</x>
+     <y>340</y>
+     <width>741</width>
      <height>192</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QPlainTextEdit" name="plainTextEdit">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>560</y>
+     <width>741</width>
+     <height>111</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>540</y>
+     <width>47</width>
+     <height>13</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Лог</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>320</y>
+     <width>141</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Все время использования</string>
    </property>
   </widget>
  </widget>
