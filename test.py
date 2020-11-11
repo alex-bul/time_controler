@@ -1,10 +1,9 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QAbstractItemView, QFileDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QAbstractItemView, QFileDialog, QWidget
 import sys
 from PyQt5.QtChart import QChart, QChartView, QBarSet, QBarSeries, QStackedBarSeries, QBarCategoryAxis
-from PyQt5.QtGui import QPainter
+from PyQt5.QtGui import QPainter, QPixmap
 from PyQt5.QtCore import Qt
-import pyqtgraph as pg
-import numpy as np
+import os
 import time
 import logging
 
@@ -13,6 +12,16 @@ from DB_module import DB_bot
 from test_form import Ui_Form
 import listeners
 import datetime
+import xlsxwriter
+
+if "icons" not in os.listdir(os.path.curdir):
+    os.mkdir("./icons/")
+
+
+def get_session_index(data, session):
+    if session in data:
+        return data.index(session)
+    return -1
 
 
 def get_seconds_current_day():
@@ -20,9 +29,20 @@ def get_seconds_current_day():
     return int(current_time.hour) * 3600 + int(current_time.minute) * 60 + int(current_time.second)
 
 
+class ImageWidget(QWidget):
+
+    def __init__(self, imagePath, parent):
+        super(ImageWidget, self).__init__(parent)
+        self.picture = QPixmap(imagePath)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.drawPixmap(0, 0, self.picture)
+
+
 class QTextEditLogger(logging.Handler):
     def __init__(self, parent):
-        super().__init__()
+        super(QTextEditLogger, self).__init__()
 
         self.widget = parent.plainTextEdit
         self.widget.setReadOnly(True)
@@ -43,6 +63,7 @@ class MyWidget(QMainWindow, Ui_Form):
         self.buttonRefresh.clicked.connect(self.update)
         self.pushButton_2.clicked.connect(self.saveFileDialog)
         self.chartView = None
+        self.current_table_data = []
         self.update()
 
         logTextBox = QTextEditLogger(self)
@@ -69,7 +90,7 @@ class MyWidget(QMainWindow, Ui_Form):
                 hour = int(hour) + 1
             sorted_data[hour] = sorted_data.get(hour, []) + [row]
 
-        for j in range(24):
+        for j in range(1, 25):
             if j in sorted_data.keys():
                 result = sum([i[2] for i in sorted_data[j]]) // 60
                 high.append(result)
@@ -113,20 +134,28 @@ class MyWidget(QMainWindow, Ui_Form):
         current_time = time.time()
         sessions = self.c.get_sessions_by_date(current_time - 86400)
         data_by_programms = {}
+        executable_paths = {}
         for row in sessions:
             data_by_programms[row[1]] = data_by_programms.get(row[1], 0) + row[2]
-        self.tableWidget.setColumnCount(2)  # Устанавливаем три колонки
+            executable_paths[row[1]] = row[3]
+        self.tableWidget.setColumnCount(3)  # Устанавливаем три колонки
         # self.tableWidget.setRowCount(len(data_by_programms))
-        self.tableWidget.setHorizontalHeaderLabels(["Программа", "Длительность (мин.)"])
-        self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        for i, row in enumerate(sorted(list(data_by_programms.items()), key=lambda x: x[1], reverse=True)):
-            duration = int(row[1] // 60) if row[1] // 60 % 1 == 0 else row[1] // 60
-            if duration:
-
-                if self.tableWidget.rowCount() <= i:
-                    self.tableWidget.insertRow(self.tableWidget.rowCount())
-                self.tableWidget.setItem(i, 0, QTableWidgetItem(row[0]))
-                self.tableWidget.setItem(i, 1, QTableWidgetItem(str(duration)))
+        self.tableWidget.setHorizontalHeaderLabels(["Иконка", "Программа", "Длительность (мин.)"])
+        # self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        table_data = sorted(list(data_by_programms.items()), key=lambda x: x[1], reverse=True)
+        result = []
+        for i, row in enumerate(table_data):
+            if i != get_session_index(self.current_table_data, row):
+                duration = int(row[1] // 60) if row[1] // 60 % 1 == 0 else row[1] // 60
+                if duration:
+                    if self.tableWidget.rowCount() <= i:
+                        self.tableWidget.insertRow(self.tableWidget.rowCount())
+                    if row[0] not in os.listdir("./icons"):
+                        listeners.save_image(executable_paths[row[0]], row[0])
+                    self.tableWidget.setCellWidget(i, 0, ImageWidget(f'./icons/{row[0]}.bmp', self))
+                    self.tableWidget.setItem(i, 1, QTableWidgetItem(row[0]))
+                    self.tableWidget.setItem(i, 2, QTableWidgetItem(str(duration)))
+        self.current_table_data = table_data.copy()
         self.tableWidget.resizeColumnsToContents()
 
     def saveFileDialog(self):
@@ -135,10 +164,23 @@ class MyWidget(QMainWindow, Ui_Form):
         fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", "",
                                                   "All Files (*);;Text Files (*.txt)", options=options)
         if fileName:
-            print(fileName)
+            if '.xlsx' not in fileName:
+                fileName = fileName.strip('\n .') + '.xlsx'
+            workbook = xlsxwriter.Workbook(fileName)
+            worksheet = workbook.add_worksheet()
 
-        with open(fileName, 'w') as file:
-            file.write('ddddd')
+            for column, title in enumerate(["Программа", "Длительность (мин.)"]):
+                worksheet.write(0, column, title)
+
+            for row, (title, duration) in enumerate([["Программа", "Длительность (мин.)"]] + self.current_table_data):
+                worksheet.write(row, 0, title)
+                worksheet.write(row, 1, duration)
+
+            row += 1
+            worksheet.write(row, 0, 'Общее время')
+            worksheet.write(row, 1, f'=SUM(B2:B{row})')
+
+            workbook.close()
 
 
 def run_window():
