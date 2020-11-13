@@ -1,7 +1,8 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QAbstractItemView, QFileDialog, QWidget, QTextEdit
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QAbstractItemView, QFileDialog, QWidget, \
+    QDialog, QDialogButtonBox, QVBoxLayout, QLabel
 import sys
 from PyQt5.QtChart import QChart, QChartView, QBarSet, QBarSeries, QStackedBarSeries, QBarCategoryAxis
-from PyQt5.QtGui import QPainter, QPixmap, QColor
+from PyQt5.QtGui import QPainter, QPixmap, QColor, QIcon
 from PyQt5.QtCore import Qt
 import os
 import time
@@ -16,6 +17,27 @@ import xlsxwriter
 
 if "icons" not in os.listdir(os.path.curdir):
     os.mkdir("./icons/")
+
+
+class CustomDialog(QDialog):
+
+    def __init__(self, *args, **kwargs):
+        super(CustomDialog, self).__init__(*args, **kwargs)
+
+        self.setWindowTitle("Дополнительная статистика")
+
+        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.lad = QLabel(self, text='В разработке...')
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.lad)
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
 
 
 def get_session_index(data, session):
@@ -56,14 +78,16 @@ class MyWidget(QMainWindow, Ui_Form):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.setWindowTitle("PyQt BarChart")
+        self.setWindowTitle("Time control")
         self.setGeometry(100, 100, 770, 700)
+        self.setWindowIcon(QIcon('analytics.png'))
 
         self.chartView = QChartView()
         self.verticalLayout.addWidget(self.chartView)
         self.c = DB_bot()
         self.buttonRefresh.clicked.connect(self.update)
-        self.pushButton_2.clicked.connect(self.saveFileDialog)
+        self.pushButton_export.clicked.connect(self.saveFileDialog)
+        self.pushButton_stats.clicked.connect(self.openStatDialog)
         self.current_table_data = []
         self.update()
         self.setLayout(self.verticalLayout_2)
@@ -76,6 +100,7 @@ class MyWidget(QMainWindow, Ui_Form):
         w = QWidget(self)
         w.setLayout(self.verticalLayout_2)
         self.setCentralWidget(w)
+
 
     def update(self):
         self.update_graph()
@@ -95,7 +120,6 @@ class MyWidget(QMainWindow, Ui_Form):
             if hour % 1 > 0:
                 hour = int(hour) + 1
             sorted_data[hour] = sorted_data.get(hour, []) + [row]
-
         for j in range(1, 25):
             if j in sorted_data.keys():
                 result = sum([i[2] for i in sorted_data[j]]) // 60
@@ -186,11 +210,14 @@ class MyWidget(QMainWindow, Ui_Form):
 
             workbook.close()
 
-
+    def openStatDialog(self):
+        dlg = CustomDialog(self)
+        dlg.exec_()
 
 
 def run_window():
     app = QApplication(sys.argv)
+    app.setAttribute(Qt.AA_DisableWindowContextHelpButton)
     ex = MyWidget()
     ex.show()
     sys.exit(app.exec_())

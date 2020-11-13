@@ -26,6 +26,7 @@ class Ui_Form(object):
         self.verticalLayout_2.setContentsMargins(10, 10, 10, 10)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName("verticalLayout")
         self.verticalLayout_2.addLayout(self.verticalLayout)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
@@ -38,9 +39,18 @@ class Ui_Form(object):
         self.buttonRefresh.setIcon(icon)
         self.buttonRefresh.setObjectName("buttonRefresh")
         self.horizontalLayout.addWidget(self.buttonRefresh)
-        self.pushButton_2 = QtWidgets.QPushButton(self.verticalLayoutWidget_2)
-        self.pushButton_2.setObjectName("pushButton_2")
-        self.horizontalLayout.addWidget(self.pushButton_2)
+        self.pushButton_stats = QtWidgets.QPushButton(self.verticalLayoutWidget_2)
+        self.pushButton_stats.setStyleSheet("color: white;\n"
+"font: 87 8pt \"Segoe UI Black\";\n"
+"background-color: rgb(142, 142, 255);\n"
+"border-color:  rgb(142, 142, 255);")
+        self.pushButton_stats.setObjectName("pushButton_stats")
+        self.horizontalLayout.addWidget(self.pushButton_stats)
+        self.pushButton_export = QtWidgets.QPushButton(self.verticalLayoutWidget_2)
+        self.pushButton_export.setStyleSheet("\n"
+"")
+        self.pushButton_export.setObjectName("pushButton_export")
+        self.horizontalLayout.addWidget(self.pushButton_export)
         self.verticalLayout_2.addLayout(self.horizontalLayout)
         self.label_2 = QtWidgets.QLabel(self.verticalLayoutWidget_2)
         self.label_2.setObjectName("label_2")
@@ -63,6 +73,7 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.pushButton_2.setText(_translate("Form", "Экспорт в .xlsx"))
+        self.pushButton_stats.setText(_translate("Form", "Другая статистика"))
+        self.pushButton_export.setText(_translate("Form", "Экспорт в .xlsx"))
         self.label_2.setText(_translate("Form", "Все время использования"))
         self.label.setText(_translate("Form", "Лог"))

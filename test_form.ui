@@ -44,7 +44,11 @@
      <number>10</number>
     </property>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout"/>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+     </layout>
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
@@ -63,7 +67,24 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_2">
+       <widget class="QPushButton" name="pushButton_stats">
+        <property name="styleSheet">
+         <string notr="true">color: white;
+font: 87 8pt &quot;Segoe UI Black&quot;;
+background-color: rgb(142, 142, 255);
+border-color:  rgb(142, 142, 255);</string>
+        </property>
+        <property name="text">
+         <string>Другая статистика</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_export">
+        <property name="styleSheet">
+         <string notr="true">
+</string>
+        </property>
         <property name="text">
          <string>Экспорт в .xlsx</string>
         </property>

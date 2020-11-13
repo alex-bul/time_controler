@@ -59,7 +59,8 @@ class ButtonListener:
                     time.sleep(60)
                 except Exception as ex:
                     print('Ошибка записи данных клава:', ex)
-
+            else:
+                time.sleep(60)
 
 if __name__ == '__main__':
     ButtonListener().start()
