@@ -1,7 +1,7 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QAbstractItemView, QFileDialog, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QAbstractItemView, QFileDialog, QWidget, QTextEdit
 import sys
 from PyQt5.QtChart import QChart, QChartView, QBarSet, QBarSeries, QStackedBarSeries, QBarCategoryAxis
-from PyQt5.QtGui import QPainter, QPixmap
+from PyQt5.QtGui import QPainter, QPixmap, QColor
 from PyQt5.QtCore import Qt
 import os
 import time
@@ -58,34 +58,40 @@ class MyWidget(QMainWindow, Ui_Form):
         self.setupUi(self)
         self.setWindowTitle("PyQt BarChart")
         self.setGeometry(100, 100, 770, 700)
-        self.show()
+
+        self.chartView = QChartView()
+        self.verticalLayout.addWidget(self.chartView)
         self.c = DB_bot()
         self.buttonRefresh.clicked.connect(self.update)
         self.pushButton_2.clicked.connect(self.saveFileDialog)
-        self.chartView = None
         self.current_table_data = []
         self.update()
+        self.setLayout(self.verticalLayout_2)
 
         logTextBox = QTextEditLogger(self)
-        # self.plainTextEdit.setTextInteractionFlags(Qt.TextSelectableByMouse)
         logTextBox.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
         logging.getLogger().addHandler(logTextBox)
         logging.getLogger().setLevel(logging.DEBUG)
+
+        w = QWidget(self)
+        w.setLayout(self.verticalLayout_2)
+        self.setCentralWidget(w)
 
     def update(self):
         self.update_graph()
         self.update_list()
 
     def update_graph(self):
-        self.verticalLayout.removeWidget(self.chartView)
         low = QBarSet("Сон")
         high = QBarSet("Работа")
+        high.setColor(QColor(115, 199, 82))
 
         current_time = time.time()
-        sessions = self.c.get_sessions_by_date(current_time - get_seconds_current_day())
+        start_day_time = current_time - get_seconds_current_day()
+        sessions = self.c.get_sessions_by_date(start_day_time)
         sorted_data = {}
         for row in sessions:
-            hour = (current_time - row[-1]) / 3600
+            hour = (row[-1] - start_day_time) / 3600
             if hour % 1 > 0:
                 hour = int(hour) + 1
             sorted_data[hour] = sorted_data.get(hour, []) + [row]
@@ -100,7 +106,7 @@ class MyWidget(QMainWindow, Ui_Form):
                 low.append(0)
 
         series = QStackedBarSeries()
-        series.append(low)
+        # series.append(low)
         series.append(high)
 
         chart = QChart()
@@ -115,24 +121,20 @@ class MyWidget(QMainWindow, Ui_Form):
         axis.setTitleText("Время")
         chart.createDefaultAxes()
         chart.setAxisX(axis, series)
-        chart.axisY(series).setRange(-60, 60)
+        chart.axisY(series).setRange(0, 60)
         chart.axisY(series).setTitleText("Длительность (мин.)")
         chart.setMinimumWidth(20)
 
         chart.legend().setVisible(True)
         chart.legend().setAlignment(Qt.AlignBottom)
 
-        self.chartView = QChartView(chart)
+        self.chartView.setChart(chart)
         self.chartView.setRenderHint(QPainter.Antialiasing)
-
-        self.chartView = QChartView(chart)
-        # self.chartView.setGeometry(100, 100, 100, 100)
-        self.chartView.setRenderHint(QPainter.Antialiasing)
-        self.verticalLayout.addWidget(self.chartView)
 
     def update_list(self):
         current_time = time.time()
-        sessions = self.c.get_sessions_by_date(current_time - 86400)
+        start_day_time = current_time - get_seconds_current_day()
+        sessions = self.c.get_sessions_by_date(start_day_time)
         data_by_programms = {}
         executable_paths = {}
         for row in sessions:
@@ -141,9 +143,8 @@ class MyWidget(QMainWindow, Ui_Form):
         self.tableWidget.setColumnCount(3)  # Устанавливаем три колонки
         # self.tableWidget.setRowCount(len(data_by_programms))
         self.tableWidget.setHorizontalHeaderLabels(["Иконка", "Программа", "Длительность (мин.)"])
-        # self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         table_data = sorted(list(data_by_programms.items()), key=lambda x: x[1], reverse=True)
-        result = []
         for i, row in enumerate(table_data):
             if i != get_session_index(self.current_table_data, row):
                 duration = int(row[1] // 60) if row[1] // 60 % 1 == 0 else row[1] // 60
@@ -172,15 +173,20 @@ class MyWidget(QMainWindow, Ui_Form):
             for column, title in enumerate(["Программа", "Длительность (мин.)"]):
                 worksheet.write(0, column, title)
 
-            for row, (title, duration) in enumerate([["Программа", "Длительность (мин.)"]] + self.current_table_data):
-                worksheet.write(row, 0, title)
-                worksheet.write(row, 1, duration)
+            row = 1
+            for title, duration in self.current_table_data:
+                duration = int(duration // 60) if duration // 60 % 1 == 0 else duration // 60
+                if duration:
+                    worksheet.write(row, 0, title)
+                    worksheet.write(row, 1, duration)
+                    row += 1
 
-            row += 1
             worksheet.write(row, 0, 'Общее время')
             worksheet.write(row, 1, f'=SUM(B2:B{row})')
 
             workbook.close()
+
+
 
 
 def run_window():
