@@ -9,17 +9,13 @@ import time
 import psutil
 import os
 
-from test import run_window
+from main import run_window
 from threading import Thread
 from mouse_listener import MouseListener
 from button_listener import ButtonListener
 from DB_module import DB_bot
 
 import logging
-
-
-#
-# logging.info('dddddddd')
 
 
 def start_all_listener():
@@ -75,8 +71,8 @@ class WindowListener:
         if pid >= 0:
             path = psutil.Process(pid).exe()
             title = win32gui.GetWindowText(hwnd).split('-')[-1].strip()
-            if path != self.current_procces.get('executable_path', '') or datetime.datetime.now().strftime('%H:%M')[
-                                                                          3:] == '00':
+            if path != self.current_procces.get('executable_path', '') or datetime.datetime.now().strftime('%H:%M:%S')[
+                                                                          3:] == '00:00':
                 logging.info(f'начата сессия {title}')
                 self.current_procces.clear()
                 self.current_procces['title'] = title

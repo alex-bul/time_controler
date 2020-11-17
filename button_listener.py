@@ -46,17 +46,17 @@ class ButtonListener:
                     else:
                         a = open(file_name_buttons, 'r').read()
                         file_data = json.loads(a)
-                    time_for_write = (current_time - datetime.timedelta(hours=1)).strftime('%H:%M')
+                    time_for_write = (current_time - datetime.timedelta(hours=1)).strftime('%H:%M:%S')
                     current_date = datetime.datetime.now()
-                    if time_for_write == '23:00':
-                        current_date -= datetime.timedelta(days=1)
+                    # if time_for_write == '23:00':
+                    #     current_date -= datetime.timedelta(days=1)
                     today_data = file_data.get(current_date.strftime('%d.%m.%y'), {})
                     today_data[time_for_write] = {'buttons': self.buttons, 'count_press': self.count_press}
                     file_data[current_date.strftime('%d.%m.%y')] = today_data
                     with open(file_name_buttons, 'w') as f:
                         f.write(json.dumps(file_data))
                     self.restart()
-                    time.sleep(60)
+                    time.sleep(1)
                 except Exception as ex:
                     print('Ошибка записи данных клава:', ex)
             else:

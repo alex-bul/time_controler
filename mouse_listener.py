@@ -19,8 +19,7 @@ class MouseListener:
         Thread(target=self.write_data).start()
         with Listener(
                 on_move=self.on_move,
-                on_click=self.on_click,
-                on_scroll=self.on_scroll) as listener:
+                on_click=self.on_click) as listener:
             listener.join()
 
     def on_move(self, x, y):
@@ -30,9 +29,6 @@ class MouseListener:
 
     def on_click(self, x, y, button, pressed):
         self.clicks += 1
-
-    def on_scroll(self, x, y, dx, dy):
-        pass
 
     def get_distance(self):
         return self.distance
@@ -47,22 +43,26 @@ class MouseListener:
                 try:
                     if file_name_mouse not in os.listdir(os.path.curdir):
                         with open(file_name_mouse, 'w') as f:
+                            print(2)
                             f.write(json.dumps({}))
                         file_data = {}
                     else:
                         a = open(file_name_mouse, 'r').read()
+                        if a == '':
+                            a = '{}'
                         file_data = json.loads(a)
-                    time_for_write = (current_time - datetime.timedelta(hours=1)).strftime('%H:%M')
+                    time_for_write = (current_time - datetime.timedelta(hours=1)).strftime('%H:%M:%S')
                     current_date = datetime.datetime.now()
-                    if time_for_write == '23:00':
-                        current_date -= datetime.timedelta(days=1)
+                    print({'distance': self.distance, 'count_press': self.clicks // 2})
+                    # if time_for_write == '23:00':
+                    #     current_date -= datetime.timedelta(days=1)
                     today_data = file_data.get(current_date.strftime('%d.%m.%y'), {})
                     today_data[time_for_write] = {'distance': self.distance, 'count_press': self.clicks}
                     file_data[current_date.strftime('%d.%m.%y')] = today_data
                     with open(file_name_mouse, 'w') as f:
                         f.write(json.dumps(file_data))
                     self.restart()
-                    time.sleep(60)
+                    time.sleep(1)
                 except Exception as ex:
                     print('Ошибка записи данных клава:', ex)
 
